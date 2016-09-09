@@ -21,6 +21,14 @@ var HtmlWebpackPlugin = require('../index.js');
 var OUTPUT_DIR = path.join(__dirname, '../dist');
 
 jasmine.getEnv().defaultTimeoutInterval = 30000;
+var JasmineConsoleReporter = require('jasmine-console-reporter');
+jasmine.getEnv().addReporter(new JasmineConsoleReporter({
+  colors: 1,
+  cleanStack: 1,
+  verbosity: 4,
+  listStyle: 'indent',
+  activity: false
+}));
 
 function testHtmlPlugin (webpackConfig, expectedResults, outputFile, done, expectErrors, expectWarnings) {
   outputFile = outputFile || 'index.html';
@@ -1114,7 +1122,7 @@ describe('HtmlWebpackPlugin', function () {
           template: path.join(__dirname, 'fixtures/non-existing-template.html')
         })
       ]
-    }, ['Child compilation failed:\n  Entry module not found:'], null, done, true);
+    }, ['Error: Cannot resolve'], null, done, true);
   });
 
   it('should sort the chunks in auto mode', function (done) {
@@ -1238,6 +1246,28 @@ describe('HtmlWebpackPlugin', function () {
         })
       ]
     }, ['templateParams.compilation exists: true'], null, done);
+  });
+
+  it('should provide globals to the template compilation', function (done) {
+    var template = path.resolve(__dirname, 'fixtures/templateGlobals.js');
+    var templatePath = path.dirname(template);
+    testHtmlPlugin({
+      entry: path.join(__dirname, 'fixtures/index.js'),
+      output: {
+        path: OUTPUT_DIR,
+        filename: 'index_bundle.js'
+      },
+      plugins: [
+        new HtmlWebpackPlugin({
+          template: template,
+          inject: false
+        })
+      ]
+    }, [
+      '"__entry":"' + template + '"',
+      '"__entryPath":"' + templatePath + '"',
+      '"HTML_WEBPACK_PLUGIN":true'
+    ], null, done);
   });
 
   it('should not treat templateContent set to an empty string as missing', function (done) {

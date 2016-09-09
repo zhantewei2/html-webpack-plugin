@@ -205,6 +205,14 @@ HtmlWebpackPlugin.prototype.apply = function (compiler) {
 };
 
 /**
+ * Resolves a request to a real file path
+ */
+HtmlWebpackPlugin.prototype.getResolvedFilename = function (request, compiler) {
+  var requestWithoutLoaders = this.options.template.replace(/^.+!/, '').replace(/\?.+$/, '');
+  return Promise.promisify(compiler.resolvers.normal.resolve)(compiler.context, requestWithoutLoaders);
+};
+
+/**
  * Evaluates the child compilation result
  * Returns a promise
  */
@@ -212,23 +220,32 @@ HtmlWebpackPlugin.prototype.evaluateCompilationResult = function (compilation, s
   if (!source) {
     return Promise.reject('The child compilation didn\'t provide a result');
   }
+  return this.getResolvedFilename(this.options.template, compilation.compiler)
+    .then(function (templatePath) {
+      // The LibraryTemplatePlugin stores the template result in a local variable.
+      // To extract the result during the evaluation this part has to be removed.
+      source = source.replace('var HTML_WEBPACK_PLUGIN_RESULT =', '');
 
-  // The LibraryTemplatePlugin stores the template result in a local variable.
-  // To extract the result during the evaluation this part has to be removed.
-  source = source.replace('var HTML_WEBPACK_PLUGIN_RESULT =', '');
-  var template = this.options.template.replace(/^.+!/, '').replace(/\?.+$/, '');
-  var vmContext = vm.createContext(_.extend({HTML_WEBPACK_PLUGIN: true, require: require}, global));
-  var vmScript = new vm.Script(source, {filename: template});
-  // Evaluate code and cast to string
-  var newSource;
-  try {
-    newSource = vmScript.runInContext(vmContext);
-  } catch (e) {
-    return Promise.reject(e);
-  }
-  return typeof newSource === 'string' || typeof newSource === 'function'
-    ? Promise.resolve(newSource)
-    : Promise.reject('The loader "' + this.options.template + '" didn\'t return html.');
+      var vmContext = vm.createContext(_.extend({
+        HTML_WEBPACK_PLUGIN: true,
+        require: require,
+        __entry: templatePath,
+        __entryPath: path.dirname(templatePath)
+      }, global));
+
+      var vmScript = new vm.Script(source, {filename: path.basename(templatePath)});
+      // Evaluate code and cast to string
+      var newSource;
+      try {
+        newSource = vmScript.runInContext(vmContext);
+      } catch (templateEvaluationError) {
+        return Promise.reject(templateEvaluationError);
+      }
+      // Verify that the template result is a template function or a template string
+      return typeof newSource === 'string' || typeof newSource === 'function'
+        ? Promise.resolve(newSource)
+        : Promise.reject('The loader "' + this.options.template + '" didn\'t return html.');
+    });
 };
 
 /**
