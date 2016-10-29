@@ -1,3 +1,7 @@
 module.exports = function (templateParams) {
-  return 'templateParams.compilation exists: ' + !!templateParams.compilation;
+  return {
+    compilation: typeof templateParams.compilation,
+    dirname: __dirname,
+    filename: __filename
+  };
 };

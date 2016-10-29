@@ -11,7 +11,7 @@ module.exports = {
   },
   module: {
     loaders: [
-      { test: /\.css$/, loader: ExtractTextPlugin.extract('style-loader', 'css-loader') },
+      { test: /\.css$/, loader: ExtractTextPlugin.extract({loader: 'css-loader'}) },
       { test: /\.png$/, loader: 'file-loader' },
       { test: /\.html$/, loader: 'html-loader' }
     ]
