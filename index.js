@@ -100,7 +100,7 @@ HtmlWebpackPlugin.prototype.apply = function (compiler) {
               if (publicPath && publicPath.substr(-1) !== '/') {
                 publicPath += '/';
               }
-              assets.favicon = publicPath + faviconBasename;
+              assets.favicon = publicPath+self.options.prefix+ faviconBasename;
             });
         }
       })
