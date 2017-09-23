@@ -431,10 +431,10 @@ HtmlWebpackPlugin.prototype.htmlWebpackPluginAssets = function (compilation, chu
     assets.chunks[chunkName] = {};
 
     // Prepend the public path to all chunk files
-    var chunkFiles = [].concat(chunk.files).map(function (chunkFile) {
-      return publicPath+this.options.prefix+ chunkFile;
-    });
+    var chunkFiles = [].concat(chunk.files).map(chunkFile=>publicPath+this.options.prefix+ chunkFile);
 
+    
+    
     // Append a hash for cache busting
     if (this.options.hash) {
       chunkFiles = chunkFiles.map(function (chunkFile) {
