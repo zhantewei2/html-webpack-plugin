@@ -24,7 +24,8 @@ function HtmlWebpackPlugin (options) {
     chunks: 'all',
     excludeChunks: [],
     title: 'Webpack App',
-    xhtml: false
+    xhtml: false,
+    prefix:''
   }, options);
 }
 
@@ -431,7 +432,7 @@ HtmlWebpackPlugin.prototype.htmlWebpackPluginAssets = function (compilation, chu
 
     // Prepend the public path to all chunk files
     var chunkFiles = [].concat(chunk.files).map(function (chunkFile) {
-      return publicPath + chunkFile;
+      return publicPath+this.options.prefix+ chunkFile;
     });
 
     // Append a hash for cache busting
